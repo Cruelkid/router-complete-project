@@ -1,27 +1,54 @@
-import { Fragment } from 'react';
+import { Fragment, useEffect } from 'react';
 import { Route, useParams, useRouteMatch } from 'react-router';
 import { Link } from 'react-router-dom';
 import Comments from '../components/comments/Comments';
 import HighlightedQuote from '../components/quotes/HighlightedQuote';
-
-const DUMMY_QUOTES = [
-    { id: 'q1', author: 'Tony', text: 'First quote' },
-    { id: 'q2', author: 'Cruelkid', text: 'Second quote' },
-];
+import LoadingSpinner from '../components/UI/LoadingSpinner';
+import useHttp from '../hooks/use-http';
+import { getSingleQuote } from '../lib/api';
 
 const QuoteDetails = () => {
     const match = useRouteMatch();
     const params = useParams();
+    const { qID } = params;
+    const {
+        sendRequest,
+        status,
+        error,
+        data: fetchedQuote,
+    } = useHttp(getSingleQuote, true);
 
-    const quote = DUMMY_QUOTES.find((quote) => quote.id === params.qID);
+    useEffect(() => {
+        sendRequest(qID);
+    }, [sendRequest, qID]);
 
-    if (!quote) {
+    if (status === 'pending') {
+        return (
+            <div className="centered">
+                <LoadingSpinner />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="centered error">
+                <h3>Oops! An error has occurred! :(</h3>
+                <p>{error}</p>
+            </div>
+        );
+    }
+
+    if (!fetchedQuote.text || !fetchedQuote.author) {
         return <p>Quote not found!</p>;
     }
 
     return (
         <Fragment>
-            <HighlightedQuote author={quote.author} text={quote.text} />
+            <HighlightedQuote
+                author={fetchedQuote.author}
+                text={fetchedQuote.text}
+            />
             <Route path={match.path} exact>
                 <div className="centered">
                     <Link className="btn--flat" to={`${match.url}/comments`}>
@@ -30,6 +57,11 @@ const QuoteDetails = () => {
                 </div>
             </Route>
             <Route path={`${match.path}/comments`}>
+                <div className="centered">
+                    <Link className="btn--flat" to={`${match.url}`}>
+                        Hide comments
+                    </Link>
+                </div>
                 <Comments />
             </Route>
         </Fragment>

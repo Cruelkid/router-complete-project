@@ -20,7 +20,9 @@ const QuoteForm = (props) => {
         if (enteredAuthor.length > 1 && enteredText.length > 1) {
             props.onAddQuote({ author: enteredAuthor, text: enteredText });
         } else {
-            history.push('/quotes');
+            if (!props.hasError) {
+                history.push('/quotes');
+            }
         }
     }
 
@@ -47,6 +49,12 @@ const QuoteForm = (props) => {
                     {props.isLoading && (
                         <div className={styles.loading}>
                             <LoadingSpinner />
+                        </div>
+                    )}
+
+                    {props.hasError && (
+                        <div className="centered">
+                            An error has occurred! :(
                         </div>
                     )}
 
